@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from "react";
 import {
   Box,
   Button,
@@ -9,74 +9,95 @@ import {
   Divider,
   TextField,
   Typography,
-  Unstable_Grid2 as Grid
-} from '@mui/material';
+  Unstable_Grid2 as Grid,
+} from "@mui/material";
+import ArticleServiceInstance from "src/services/articleService";
+import { useSelector } from "react-redux";
+import { useRouter } from "next/router";
 
 const types = [
-    {
-        value: 'Y',
-        label: 'PUBLIC'
-    },
-    {
-        value: 'N',
-        label: 'PRIVATE'
-    },
+  {
+    value: "Y",
+    label: "PUBLIC",
+  },
+  {
+    value: "N",
+    label: "PRIVATE",
+  },
 ];
 
 const category = [
-    {
-        value: 'book',
-        label: 'BOOK'
-    },
-    {
-        value: 'movie',
-        label: 'MOVIE'
-    },
-    {
-        value: 'it',
-        label: 'IT'
-    },
-    {
-        value: 'art',
-        label: 'ART'
-    },
-    {
-        value: 'music',
-        label: 'MUSIC'
-    },
-]
+  {
+    value: "book",
+    label: "BOOK",
+  },
+  {
+    value: "movie",
+    label: "MOVIE",
+  },
+  {
+    value: "it",
+    label: "IT",
+  },
+  {
+    value: "art",
+    label: "ART",
+  },
+  {
+    value: "music",
+    label: "MUSIC",
+  },
+];
 
-export const WriteComponent = () => {
+export const WriteComponent = (props) => {
+  //
+  const user = useSelector((state) => state.user);
+  const token = useSelector((state) => state.token);
+  const router = useRouter();
+
   const [values, setValues] = useState({
-    title: '',
-    contents: '',
-    category: 'music',
-    publicYn: 'Y'
+    token,
+    title: "",
+    contents: "",
+    category: "music",
+    publicYn: "Y",
+    author: user.email,
   });
 
-  const handleChange = useCallback(
-    (event) => {
-      setValues((prevState) => ({
-        ...prevState,
-        [event.target.name]: event.target.value
-      }));
-    },
-    []
-  );
+  useEffect(() => {
+    if (props.article) {
+      console.log(props);
+      setValues({
+        token,
+        title: props.article.title,
+        contents: props.article.contents,
+        category: props.article.category,
+        publicYn: props.article.publicYn,
+        author: "",
+      });
+    }
+  }, []);
 
-  const handleSubmit = useCallback(
-    (event) => {
-      event.preventDefault();
-    },
-    []
-  );
+  const handleChange = useCallback((event) => {
+    setValues((prevState) => ({
+      ...prevState,
+      [event.target.name]: event.target.value,
+    }));
+  }, []);
+
+  const handleSubmit = async () => {
+    console.log(values);
+    const response = await ArticleServiceInstance.saveArticle(values);
+    console.log("handleSubmit", response);
+
+    if (response.status === 200) {
+      alert("게시물이 정상적으로 등록되었습니다.");
+      router.push("/article/list");
+    }
+  };
 
   return (
-    <form
-      autoComplete="off"
-      noValidate
-      onSubmit={handleSubmit}
-    >
+    <form autoComplete="off" noValidate>
       <Card>
         <CardHeader
           subheader="Title? Contents? You can write anything you want!"
@@ -84,14 +105,8 @@ export const WriteComponent = () => {
         />
         <CardContent sx={{ pt: 0 }}>
           <Box sx={{ m: -1.5 }}>
-            <Grid
-              container
-              spacing={3}
-            >
-              <Grid
-                xs={12}
-                md={12}
-              >
+            <Grid container spacing={3}>
+              <Grid xs={12} md={12}>
                 <TextField
                   fullWidth
                   helperText="Please specify your subject"
@@ -103,10 +118,7 @@ export const WriteComponent = () => {
                 />
               </Grid>
 
-              <Grid
-                xs={12}
-                md={6}
-              >
+              <Grid xs={12} md={6}>
                 <TextField
                   fullWidth
                   label="CATEGORY"
@@ -118,20 +130,14 @@ export const WriteComponent = () => {
                   value={values.category}
                 >
                   {category.map((option) => (
-                    <option
-                      key={option.value}
-                      value={option.value}
-                    >
+                    <option key={option.value} value={option.value}>
                       {option.label}
                     </option>
                   ))}
                 </TextField>
               </Grid>
 
-              <Grid
-                xs={12}
-                md={6}
-              >
+              <Grid xs={12} md={6}>
                 <TextField
                   fullWidth
                   label="PUBLIC YN"
@@ -143,20 +149,14 @@ export const WriteComponent = () => {
                   value={values.publicYn}
                 >
                   {types.map((option) => (
-                    <option
-                      key={option.value}
-                      value={option.value}
-                    >
+                    <option key={option.value} value={option.value}>
                       {option.label}
                     </option>
                   ))}
                 </TextField>
               </Grid>
-              
-              <Grid
-                xs={12}
-                md={12}
-              >
+
+              <Grid xs={12} md={12}>
                 <TextField
                   fullWidth
                   label="STORY"
@@ -165,15 +165,15 @@ export const WriteComponent = () => {
                   rows={8}
                   onChange={handleChange}
                   required
-                  value={values.description}
+                  value={values.contents}
                 />
               </Grid>
             </Grid>
           </Box>
         </CardContent>
         <Divider />
-        <CardActions sx={{ justifyContent: 'flex-end' }}>
-          <Button variant="contained">
+        <CardActions sx={{ justifyContent: "flex-end" }}>
+          <Button variant="contained" onClick={handleSubmit}>
             Save Article
           </Button>
         </CardActions>

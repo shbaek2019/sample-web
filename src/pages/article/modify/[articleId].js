@@ -2,16 +2,30 @@ import Head from "next/head";
 import { Box, Container, Stack, Typography, Unstable_Grid2 as Grid } from "@mui/material";
 import { Layout as DashboardLayout } from "src/layouts/dashboard/layout";
 import { WriteComponent } from "src/sections/article/write-component";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { useSelector } from "react-redux";
+import { useRouter } from "next/router";
+import ArticleServiceInstance from "src/services/articleService";
 
-const Page = () => {
+const Page = (props) => {
+  //
+  const token = useSelector((state) => state.token);
+  const router = useRouter();
+  const param = router.query.articleId;
+  const [articleInfo, setArticleInfo] = useState(null);
+
   useEffect(() => {
-    console.log("write article page");
+    async function fetchAndSetArticle() {
+      const data = await ArticleServiceInstance.getArticlesById(param, token);
+      setArticleInfo(data);
+    }
+    fetchAndSetArticle();
   }, []);
+
   return (
     <>
       <Head>
-        <title>Write Article | KT&G</title>
+        <title>Modify Article | KT&G</title>
       </Head>
       <Box
         component="main"
@@ -23,12 +37,12 @@ const Page = () => {
         <Container maxWidth="lg">
           <Stack spacing={3}>
             <div>
-              <Typography variant="h4">Write Article</Typography>
+              <Typography variant="h4">Modify Article</Typography>
             </div>
             <div>
               <Grid container spacing={3}>
                 <Grid xs={12} md={12} lg={12}>
-                  <WriteComponent />
+                  {articleInfo && <WriteComponent article={articleInfo} />}
                 </Grid>
               </Grid>
             </div>
